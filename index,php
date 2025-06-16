@@ -1,0 +1,68 @@
+<?php
+// Inclua os models uma vez no topo
+require_once __DIR__ . '/../Models/ClienteModel.php';
+require_once __DIR__ . '/../../helpers/verifica_login.php';
+
+class ClienteController {
+    private $conexao;
+    private $clienteModel;
+
+    public function __construct(PDO $conexao) {
+        $this->conexao = $conexao;
+        $this->clienteModel = new ClienteModel($this->conexao);
+    }
+
+    /**
+     * Carrega os dados e exibe a view da lista de clientes.
+     */
+    public function listar() {
+        // Lógica que antes estava em 'clientes_list.php'
+        $clientes = $this->clienteModel->getAll();
+        $perfil = $_SESSION['perfil'] ?? 'cliente';
+        
+        // Carrega a view passando as variáveis
+        require_once __DIR__ . '/../Views/clientes/lista_view.php';
+    }
+
+    /**
+     * Processa a criação ou atualização de um cliente.
+     */
+    public function salvar() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
+            $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+
+            if (empty($nome)) {
+                header("Location: index.php?acao=clientes_listar&erro=nome_vazio");
+                exit();
+            }
+
+            if ($id) {
+                $stmt = $this->conexao->prepare("UPDATE clientes SET nome = :nome WHERE id = :id");
+                $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            } else {
+                $stmt = $this->conexao->prepare("INSERT INTO clientes (nome) VALUES (:nome)");
+            }
+            $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
+            $stmt->execute();
+            
+            header("Location: index.php?acao=clientes_listar");
+            exit();
+        }
+    }
+
+    /**
+     * Processa a exclusão de um cliente.
+     */
+    public function excluir() {
+        $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        if ($id) {
+            $stmt = $this->conexao->prepare("DELETE FROM clientes WHERE id = :id");
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+        }
+        header("Location: index.php?acao=clientes_listar");
+        exit();
+    }
+}
+?>
