@@ -34,9 +34,7 @@ class AuthController extends Controller {
             header('Location: ' . BASE_URL . '/home');
             exit();
         } else {
-            // Em caso de falha, redireciona de volta para o login com uma mensagem de erro (opcional)
-            // session_start();
-            // $_SESSION['error_message'] = "Usuário ou senha inválidos.";
+            // Em caso de falha, redireciona de volta para o login
             header('Location: ' . BASE_URL . '/auth/login');
             exit();
         }

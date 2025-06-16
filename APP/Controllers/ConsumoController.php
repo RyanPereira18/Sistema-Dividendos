@@ -30,12 +30,28 @@ class ConsumoController extends Controller {
 
     // Exibe a lista de consumo (diferente para admin e cliente)
     public function index() {
+        $data = [];
+        $searchQuery = $_GET['q'] ?? null;
+
         if ($_SESSION['perfil'] === 'adm') {
-            $consumos = $this->consumoModel->findAllForAdmin();
+            // Admin: busca se houver query, senão, lista todos
+            if ($searchQuery) {
+                $data['consumos'] = $this->consumoModel->searchByClienteName($searchQuery);
+            } else {
+                $data['consumos'] = $this->consumoModel->findAllForAdmin();
+            }
         } else {
-            $consumos = $this->consumoModel->findAllByClienteId($_SESSION['id_cliente']);
+            // INÍCIO DA ALTERAÇÃO: Lógica para o cliente
+            // Cliente: só mostra resultados se ele buscar pelo nome.
+            if ($searchQuery) {
+                $data['consumos'] = $this->consumoModel->searchByClienteName($searchQuery);
+            } else {
+                // Se não houver busca, a lista de consumo fica vazia.
+                $data['consumos'] = [];
+            }
+            // FIM DA ALTERAÇÃO
         }
-        $this->view('consumo/index', ['consumos' => $consumos]);
+        $this->view('consumo/index', $data);
     }
 
     // Exibe o formulário de criação (só admin)

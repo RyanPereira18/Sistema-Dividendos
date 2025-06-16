@@ -14,7 +14,6 @@ class Consumo {
      * Ideal para a visão do Administrador.
      */
     public function findAllForAdmin() {
-        // Esta query une as três tabelas para obter um relatório completo
         $sql = "
             SELECT consumo.id, clientes.nome AS cliente, produtos.nome AS produto,
                    consumo.quantidade, produtos.preco,
@@ -26,6 +25,30 @@ class Consumo {
         ";
         return $this->db->query($sql)->fetchAll();
     }
+    
+    /**
+     * INÍCIO DA ALTERAÇÃO: Novo método para buscar por nome do cliente.
+     * Busca registros de consumo filtrando pelo nome do cliente.
+     * @param string $name O nome (ou parte do nome) do cliente a ser buscado.
+     */
+    public function searchByClienteName($name) {
+        // A cláusula WHERE usa LIKE para permitir buscas parciais (ex: "ryan" encontra "Ryan Pereira Mendes")
+        $sql = "
+            SELECT consumo.id, clientes.nome AS cliente, produtos.nome AS produto,
+                   consumo.quantidade, produtos.preco,
+                   (consumo.quantidade * produtos.preco) AS total
+            FROM {$this->table}
+            JOIN clientes ON consumo.id_cliente = clientes.id
+            JOIN produtos ON consumo.id_produto = produtos.id
+            WHERE clientes.nome LIKE :name
+            ORDER BY consumo.id DESC
+        ";
+        $stmt = $this->db->prepare($sql);
+        // Adiciona os curingas '%' para a busca com LIKE e executa de forma segura
+        $stmt->execute(['name' => '%' . $name . '%']);
+        return $stmt->fetchAll();
+    }
+    // FIM DA ALTERAÇÃO
 
     /**
      * Busca os registros de consumo de um cliente específico pelo seu ID.
