@@ -2,16 +2,14 @@
 // app/Core/Router.php
 
 class Router {
-    protected $controller = 'HomeController';
-    protected $method = 'index';
-    protected $params = [];
+    private $controller = 'HomeController';
+    private $method = 'index';
+    private $params = [];
 
     public function __construct() {
-        // 1. Analisa a URL
         $url = $this->parseUrl();
 
-        // 2. Define o Controller
-        // Verifica se o primeiro segmento da URL corresponde a um arquivo de Controller
+        // Verifica se o controlador existe
         if (isset($url[0]) && file_exists('../app/Controllers/' . ucfirst($url[0]) . 'Controller.php')) {
             $this->controller = ucfirst($url[0]) . 'Controller';
             unset($url[0]);
@@ -20,38 +18,30 @@ class Router {
         require_once '../app/Controllers/' . $this->controller . '.php';
         $this->controller = new $this->controller;
 
-        // 3. Define o Método
-        // Verifica se o segundo segmento da URL corresponde a um método no Controller
+        // Verifica se o método existe no controlador
         if (isset($url[1]) && method_exists($this->controller, $url[1])) {
             $this->method = $url[1];
             unset($url[1]);
         }
 
-        // 4. Define os Parâmetros
-        // O restante da URL são os parâmetros
+        // Obtém os parâmetros da URL
         $this->params = $url ? array_values($url) : [];
     }
-    
+
     /**
-     * Executa o controller e o método com os parâmetros definidos.
+     * Executa o controlador e o método com os parâmetros.
      */
     public function run() {
         call_user_func_array([$this->controller, $this->method], $this->params);
     }
-    
+
     /**
-     * Pega a URL da variável $_GET['url'] (definida no .htaccess),
-     * limpa e a divide em um array.
-     *
-     * @return array A URL dividida em segmentos.
+     * Analisa a URL para obter controlador, método e parâmetros.
+     * @return array
      */
     private function parseUrl() {
         if (isset($_GET['url'])) {
-            // filter_var com FILTER_SANITIZE_URL remove caracteres ilegais da URL
-            // rtrim remove a barra final
-            // explode divide a string em um array pela barra
             return explode('/', filter_var(rtrim($_GET['url'], '/'), FILTER_SANITIZE_URL));
         }
-        return [];
     }
 }
