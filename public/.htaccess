@@ -1,0 +1,15 @@
+# public/.htaccess
+
+# Ativa o motor de reescrita de URL
+RewriteEngine On
+
+# Condição: Se o arquivo solicitado NÃO for um arquivo físico (-f)
+RewriteCond %{REQUEST_FILENAME} !-f
+# Condição: Se o arquivo solicitado NÃO for um diretório físico (-d)
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Regra: Redireciona tudo para index.php, passando a URL original
+# como um parâmetro GET chamado 'url'.
+# [L] significa que esta é a última regra a ser processada.
+# [QSA] (Query String Append) anexa qualquer query string original à nova URL.
+RewriteRule ^(.*)$ index.php?url=$1 [L,QSA]

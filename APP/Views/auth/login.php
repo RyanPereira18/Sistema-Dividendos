@@ -1,4 +1,7 @@
-<?php session_start(); ?>
+<?php
+// app/Views/auth/login.php
+// Este arquivo não inclui header/footer para ter uma página de login limpa.
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -8,21 +11,15 @@
 </head>
 <body class="bg-light">
     <div class="container mt-5">
-        <form action="password_verify.php" method="post" class="p-4 bg-white shadow rounded w-50 mx-auto">
+        <form action="<?= BASE_URL ?>/auth/authenticate" method="post" class="p-4 bg-white shadow rounded w-50 mx-auto">
             <h2 class="mb-4 text-center">Login</h2>
-
             <?php
-            if (isset($_GET['erro'])) {
-                if ($_GET['erro'] == 'senha') {
-                    echo '<div class="alert alert-danger">Senha incorreta!</div>';
-                } elseif ($_GET['erro'] == 'usuario') {
-                    echo '<div class="alert alert-danger">Usuário não encontrado!</div>';
-                } elseif ($_GET['erro'] == 'vazio') {
-                    echo '<div class="alert alert-warning">Preencha todos os campos!</div>';
-                }
+            // Opcional: para exibir mensagens de erro
+            if (isset($_SESSION['error_message'])) {
+                echo '<div class="alert alert-danger">' . $_SESSION['error_message'] . '</div>';
+                unset($_SESSION['error_message']);
             }
             ?>
-
             <input type="text" name="usuario" placeholder="Usuário" class="form-control mb-3" required>
             <input type="password" name="senha" placeholder="Senha" class="form-control mb-3" required>
             <button type="submit" class="btn btn-primary w-100">Entrar no Sistema</button>

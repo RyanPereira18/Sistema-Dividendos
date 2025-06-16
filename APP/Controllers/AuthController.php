@@ -1,48 +1,53 @@
 <?php
-session_start();
-require_once 'conexaoBD.php';
+// app/Controllers/AuthController.php
 
-// Valida e obtém os dados do formulário de forma segura
-$usuario = filter_input(INPUT_POST, 'usuario', FILTER_SANITIZE_SPECIAL_CHARS);
-$senha = $_POST['senha'] ?? ''; // A senha não precisa de filtro para password_verify
+require_once '../app/Models/Usuario.php';
 
-if (empty($usuario) || empty($senha)) {
-    header("Location: ../../index.php?erro=vazio");
-    exit();
-}
+class AuthController extends Controller {
 
-try {
-    // Busca também o id_cliente, que é crucial para a área do cliente
-    $sql = "SELECT id, usuario, senha_hash, tipo, id_cliente FROM usuarios WHERE usuario = :usuario";
-    $stmt = $conexao->prepare($sql);
-    $stmt->bindParam(':usuario', $usuario);
-    $stmt->execute();
-
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // Verifica se o usuário existe e se a senha está correta
-    if ($user && password_verify($senha, $user['senha_hash'])) {
-        $_SESSION['id'] = $user['id'];
-        $_SESSION['usuario'] = $user['usuario'];
-        $_SESSION['perfil'] = $user['tipo'];
-
-        // Se for um cliente, guarda seu ID de cliente na sessão
-        if ($user['tipo'] === 'cliente') {
-            $_SESSION['id_cliente'] = $user['id_cliente'];
-            header("Location: ../../home_cliente.php");
-        } else {
-            header("Location: ../../home_adm.php");
-        }
-        exit();
-
-    } else {
-        // Erro de autenticação (usuário ou senha inválidos)
-        header("Location: ../../index.php?erro=usuario_ou_senha");
-        exit();
+    /**
+     * Exibe a página de login.
+     */
+    public function login() {
+        $this->view('auth/login');
     }
 
-} catch (PDOException $e) {
-    // Em caso de erro com o banco de dados
-    die("Erro de autenticação: " . $e->getMessage());
+    /**
+     * Processa os dados do formulário de login.
+     */
+    public function authenticate() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '/auth/login');
+            exit();
+        }
+
+        $usuarioModel = new Usuario();
+        $user = $usuarioModel->findByUsuario($_POST['usuario']);
+
+        // Verifica se o usuário existe e se a senha está correta
+        if ($user && password_verify($_POST['senha'], $user['senha_hash'])) {
+            $_SESSION['id'] = $user['id'];
+            $_SESSION['usuario'] = $user['usuario'];
+            $_SESSION['perfil'] = $user['tipo'];
+            $_SESSION['id_cliente'] = $user['id_cliente'];
+            
+            header('Location: ' . BASE_URL . '/home');
+            exit();
+        } else {
+            // Em caso de falha, redireciona de volta para o login com uma mensagem de erro (opcional)
+            // session_start();
+            // $_SESSION['error_message'] = "Usuário ou senha inválidos.";
+            header('Location: ' . BASE_URL . '/auth/login');
+            exit();
+        }
+    }
+
+    /**
+     * Destrói a sessão e faz o logout do usuário.
+     */
+    public function logout() {
+        session_destroy();
+        header('Location: ' . BASE_URL . '/auth/login');
+        exit();
+    }
 }
-?>

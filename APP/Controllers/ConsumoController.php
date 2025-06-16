@@ -1,47 +1,109 @@
 <?php
-require_once '../helpers/verifica_login.php';
-require_once '../../conexaoBD.php';
+// app/Controllers/ConsumoController.php
 
-try {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Dados já estavam sendo validados, o que é ótimo!
-        $cliente_id = filter_input(INPUT_POST, 'cliente_id', FILTER_VALIDATE_INT);
-        $produto_id = filter_input(INPUT_POST, 'produto_id', FILTER_VALIDATE_INT);
-        $quantidade = filter_input(INPUT_POST, 'quantidade', FILTER_VALIDATE_INT);
-        $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+require_once '../app/Models/Consumo.php';
+require_once '../app/Models/Cliente.php';
+require_once '../app/Models/Produto.php';
 
-        // Apenas processa se os dados obrigatórios forem válidos
-        if ($cliente_id && $produto_id && $quantidade) {
-            if (!empty($id)) {
-                // Atualização
-                $sql = "UPDATE consumo SET id_cliente = :cliente_id, id_produto = :produto_id, quantidade = :quantidade WHERE id = :id";
-                $stmt = $conexao->prepare($sql);
-                $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            } else {
-                // Inserção
-                $sql = "INSERT INTO consumo (id_cliente, id_produto, quantidade) VALUES (:cliente_id, :produto_id, :quantidade)";
-                $stmt = $conexao->prepare($sql);
-            }
+class ConsumoController extends Controller {
 
-            $stmt->bindParam(':cliente_id', $cliente_id, PDO::PARAM_INT);
-            $stmt->bindParam(':produto_id', $produto_id, PDO::PARAM_INT);
-            $stmt->bindParam(':quantidade', $quantidade, PDO::PARAM_INT);
-            $stmt->execute();
-        }
+    private $consumoModel;
 
-    } elseif (isset($_GET['excluir'])) {
-        $id = filter_input(INPUT_GET, 'excluir', FILTER_VALIDATE_INT);
-        if ($id) {
-            $stmt = $conexao->prepare("DELETE FROM consumo WHERE id = :id");
-            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            $stmt->execute();
+    public function __construct() {
+        $this->consumoModel = new Consumo();
+        $this->checkAuth();
+    }
+    
+    private function checkAuth() {
+        if (!isset($_SESSION['usuario'])) {
+            header('Location: ' . BASE_URL . '/auth/login');
+            exit();
         }
     }
-} catch (PDOException $e) {
-    // Tratamento de erro padronizado
-    die("Erro ao processar consumo: " . $e->getMessage());
-}
+    
+    private function checkAdminAuth() {
+        if ($_SESSION['perfil'] !== 'adm') {
+            header('Location: ' . BASE_URL . '/home');
+            exit();
+        }
+    }
 
-header("Location: ../../consumo_list.php");
-exit();
-?>
+    // Exibe a lista de consumo (diferente para admin e cliente)
+    public function index() {
+        if ($_SESSION['perfil'] === 'adm') {
+            $consumos = $this->consumoModel->findAllForAdmin();
+        } else {
+            $consumos = $this->consumoModel->findAllByClienteId($_SESSION['id_cliente']);
+        }
+        $this->view('consumo/index', ['consumos' => $consumos]);
+    }
+
+    // Exibe o formulário de criação (só admin)
+    public function create() {
+        $this->checkAdminAuth();
+        $clienteModel = new Cliente();
+        $produtoModel = new Produto();
+        $data = [
+            'clientes' => $clienteModel->findAll(),
+            'produtos' => $produtoModel->findAll()
+        ];
+        $this->view('consumo/form', $data);
+    }
+
+    // Armazena um novo consumo (só admin)
+    public function store() {
+        $this->checkAdminAuth();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $data = [
+                'id_cliente' => $_POST['id_cliente'],
+                'id_produto' => $_POST['id_produto'],
+                'quantidade' => $_POST['quantidade']
+            ];
+            $this->consumoModel->save($data);
+            header('Location: ' . BASE_URL . '/consumo');
+            exit();
+        }
+    }
+
+    // Exibe o formulário de edição (só admin)
+    public function edit($id) {
+        $this->checkAdminAuth();
+        $consumo = $this->consumoModel->findById($id);
+        if ($consumo) {
+            $clienteModel = new Cliente();
+            $produtoModel = new Produto();
+            $data = [
+                'consumo' => $consumo,
+                'clientes' => $clienteModel->findAll(),
+                'produtos' => $produtoModel->findAll()
+            ];
+            $this->view('consumo/form', $data);
+        } else {
+            header('Location: ' . BASE_URL . '/consumo');
+            exit();
+        }
+    }
+
+    // Atualiza um consumo (só admin)
+    public function update($id) {
+        $this->checkAdminAuth();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $data = [
+                'id_cliente' => $_POST['id_cliente'],
+                'id_produto' => $_POST['id_produto'],
+                'quantidade' => $_POST['quantidade']
+            ];
+            $this->consumoModel->update($id, $data);
+            header('Location: ' . BASE_URL . '/consumo');
+            exit();
+        }
+    }
+
+    // Exclui um consumo (só admin)
+    public function destroy($id) {
+        $this->checkAdminAuth();
+        $this->consumoModel->delete($id);
+        header('Location: ' . BASE_URL . '/consumo');
+        exit();
+    }
+}
