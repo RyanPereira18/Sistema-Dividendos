@@ -11,7 +11,6 @@
         <form action="password_verify.php" method="post" class="p-4 bg-white shadow rounded w-50 mx-auto">
             <h2 class="mb-4 text-center">Login</h2>
 
-            <!-- Mostrar mensagem de erro -->
             <?php
             if (isset($_GET['erro'])) {
                 if ($_GET['erro'] == 'senha') {

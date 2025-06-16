@@ -48,3 +48,14 @@ WHERE id = 1;
 ALTER TABLE usuarios ADD tipo ENUM('adm', 'cliente') NOT NULL DEFAULT 'cliente';
 
 
+-- ------------------------------------------------------------------
+-- //--- CORREÇÃO ADICIONADA ---//
+-- ------------------------------------------------------------------
+-- Adiciona a coluna id_cliente na tabela de usuários para ligar um usuário a um cliente.
+-- Isso é essencial para que o sistema saiba qual cliente corresponde a qual login.
+-- A coluna permite valores NULOS, pois os administradores não possuem um registro de cliente.
+-- A cláusula ON DELETE CASCADE garante que se um cliente for deletado, a referência aqui também será afetada.
+
+ALTER TABLE usuarios
+ADD COLUMN id_cliente INT NULL,
+ADD FOREIGN KEY (id_cliente) REFERENCES clientes(id) ON DELETE CASCADE;
