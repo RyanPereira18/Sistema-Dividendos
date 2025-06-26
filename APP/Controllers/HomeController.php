@@ -50,7 +50,7 @@ class HomeController extends Controller {
         $this->view('home/dashboard_clientes'); // Carrega a view do dashboard de clientes
     }
 
-    //NOVO MÉTODO: Retorna o número total de produtos em formato JSON para o dashboard.
+    //Retorna o número total de produtos e o valor total em formato JSON para o dashboard.
     public function getTotalProdutosData() {
         // Garante que apenas administradores acessem este dado
         if (!isset($_SESSION['usuario']) || $_SESSION['perfil'] !== 'adm') {
@@ -60,14 +60,18 @@ class HomeController extends Controller {
         }
 
         $produtoModel = new Produto();
-        $totalProdutos = $produtoModel->countAllProducts(); // Chama o novo método do Model
+        $totalProdutos = $produtoModel->countAllProducts(); // Total de produtos
+        $totalValorProdutos = $produtoModel->getTotalValueOfAllProducts(); // NOVO: Valor total dos produtos
 
         header('Content-Type: application/json');
-        echo json_encode(['total_produtos' => $totalProdutos]);
+        echo json_encode([
+            'total_produtos' => $totalProdutos,
+            'total_valor_produtos' => $totalValorProdutos // Adicionado ao JSON
+        ]);
         exit();
     }
 
-    //NOVO MÉTODO: Carrega a view do dashboard de produtos.
+    //Carrega a view do dashboard de produtos.
     public function produtosDashboard() {
         // Garante que apenas administradores acessem o dashboard
         if (!isset($_SESSION['usuario']) || $_SESSION['perfil'] !== 'adm') {

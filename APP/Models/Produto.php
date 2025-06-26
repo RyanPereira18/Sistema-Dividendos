@@ -43,9 +43,16 @@ class Produto {
         return $stmt->execute(['id' => $id]);
     }
 
-    //NOVO MÉTODO: Retorna o número total de produtos cadastrados.
+    //Retorna o número total de produtos cadastrados.
     public function countAllProducts() {
         $stmt = $this->db->query("SELECT COUNT(*) as total FROM {$this->table}");
         return $stmt->fetch()['total'];
+    }
+
+    //NOVO MÉTODO: Retorna a soma total dos preços de todos os produtos.
+    public function getTotalValueOfAllProducts() {
+        $stmt = $this->db->query("SELECT SUM(preco) as total_valor FROM {$this->table}");
+        // Retorna o valor diretamente. Se não houver produtos, SUM retorna NULL, então tratamos para 0.00
+        return $stmt->fetch()['total_valor'] ?? 0.00;
     }
 }
