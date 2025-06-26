@@ -5,7 +5,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema de Dividendos - MVC</title>
+    <title>Sistema de Dividendos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= BASE_URL ?>/css/style.css">
 </head>
@@ -20,6 +20,8 @@
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/cliente">Clientes</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/produto">Produtos</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/consumo">Consumo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/home/clientesDashboard">Dash. Clientes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/home/produtosDashboard">Dash. Produtos</a></li>
                 <?php else: ?>
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/produto">Ver Produtos</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/consumo">Meu Consumo</a></li>

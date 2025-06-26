@@ -10,6 +10,8 @@ require_once '../app/Views/templates/header.php';
             <a href="<?= BASE_URL ?>/cliente" class="btn btn-outline-primary">Gerenciar Clientes</a>
             <a href="<?= BASE_URL ?>/produto" class="btn btn-outline-success">Gerenciar Produtos</a>
             <a href="<?= BASE_URL ?>/consumo" class="btn btn-outline-warning">Gerenciar Consumos</a>
+            <a href="<?= BASE_URL ?>/home/clientesDashboard" class="btn btn-info">Dashboard de Clientes</a>
+            <a href="<?= BASE_URL ?>/home/produtosDashboard" class="btn btn-info">Dashboard de Produtos</a>
         </div>
     </div>
 </div>
