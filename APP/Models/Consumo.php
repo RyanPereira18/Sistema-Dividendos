@@ -3,16 +3,12 @@
 
 class Consumo {
     private $db;
-    private $table = 'consumo'; // Define o nome da tabela
+    private $table = 'consumo';
 
     public function __construct() {
         $this->db = Database::getInstance();
     }
-    
-    /**
-     * Busca todos os registros de consumo com detalhes do cliente e produto.
-     * Ideal para a visão do Administrador.
-     */
+
     public function findAllForAdmin() {
         $sql = "
             SELECT consumo.id, clientes.nome AS cliente, produtos.nome AS produto,
@@ -25,14 +21,8 @@ class Consumo {
         ";
         return $this->db->query($sql)->fetchAll();
     }
-    
-    /**
-     * INÍCIO DA ALTERAÇÃO: Novo método para buscar por nome do cliente.
-     * Busca registros de consumo filtrando pelo nome do cliente.
-     * @param string $name O nome (ou parte do nome) do cliente a ser buscado.
-     */
+
     public function searchByClienteName($name) {
-        // A cláusula WHERE usa LIKE para permitir buscas parciais (ex: "ryan" encontra "Ryan Pereira Mendes")
         $sql = "
             SELECT consumo.id, clientes.nome AS cliente, produtos.nome AS produto,
                    consumo.quantidade, produtos.preco,
@@ -44,16 +34,10 @@ class Consumo {
             ORDER BY consumo.id DESC
         ";
         $stmt = $this->db->prepare($sql);
-        // Adiciona os curingas '%' para a busca com LIKE e executa de forma segura
         $stmt->execute(['name' => '%' . $name . '%']);
         return $stmt->fetchAll();
     }
-    // FIM DA ALTERAÇÃO
 
-    /**
-     * Busca os registros de consumo de um cliente específico pelo seu ID.
-     * Ideal para a visão do Cliente.
-     */
     public function findAllByClienteId($idCliente) {
         $sql = "
             SELECT consumo.id, produtos.nome AS produto,
@@ -68,19 +52,13 @@ class Consumo {
         $stmt->execute(['id_cliente' => $idCliente]);
         return $stmt->fetchAll();
     }
-    
-    /**
-     * Busca um registro de consumo único pelo seu ID.
-     */
+
     public function findById($id) {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id");
         $stmt->execute(['id' => $id]);
         return $stmt->fetch();
     }
 
-    /**
-     * Salva um novo registro de consumo.
-     */
     public function save($data) {
         $sql = "INSERT INTO {$this->table} (id_cliente, id_produto, quantidade) VALUES (:id_cliente, :id_produto, :quantidade)";
         $stmt = $this->db->prepare($sql);
@@ -90,10 +68,7 @@ class Consumo {
             'quantidade' => $data['quantidade']
         ]);
     }
-    
-    /**
-     * Atualiza um registro de consumo existente.
-     */
+
     public function update($id, $data) {
         $sql = "UPDATE {$this->table} SET id_cliente = :id_cliente, id_produto = :id_produto, quantidade = :quantidade WHERE id = :id";
         $stmt = $this->db->prepare($sql);
@@ -105,12 +80,30 @@ class Consumo {
         ]);
     }
 
-    /**
-     * Exclui um registro de consumo.
-     */
     public function delete($id) {
         $sql = "DELETE FROM {$this->table} WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute(['id' => $id]);
+    }
+
+    public function getRevenueTrend() {
+        // Verifica se a coluna existe para evitar erros
+        try {
+            $this->db->query("SELECT data_consumo FROM consumo LIMIT 1");
+        } catch (PDOException $e) {
+            // Se a coluna não existir, retorna um array vazio.
+            return [];
+        }
+
+        $sql = "
+            SELECT DATE(c.data_consumo) AS dia, SUM(c.quantidade * p.preco) AS faturamento_diario
+            FROM consumo c
+            JOIN produtos p ON c.id_produto = p.id
+            WHERE c.data_consumo IS NOT NULL
+            GROUP BY DATE(c.data_consumo)
+            ORDER BY dia ASC
+        ";
+        $stmt = $this->db->query($sql);
+        return $stmt->fetchAll();
     }
 }

@@ -1,21 +1,18 @@
 <?php
 // app/Controllers/HomeController.php
 
-// Incluir os Models necessários para os dados do dashboard
 require_once '../app/Models/Cliente.php';
-require_once '../app/Models/Produto.php'; // Adicionado para o dashboard de produtos
+require_once '../app/Models/Produto.php';
+require_once '../app/Models/Consumo.php';
 
 class HomeController extends Controller {
 
-    //Verifica se o usuário está logado e exibe a página inicial apropriada.
     public function index() {
-        // Se não houver sessão ativa, redireciona para a tela de login
         if (!isset($_SESSION['usuario'])) {
             header('Location: ' . BASE_URL . '/auth/login');
             exit();
         }
 
-        // Carrega a view correspondente ao perfil do usuário
         if ($_SESSION['perfil'] === 'adm') {
             $this->view('home/adm');
         } else {
@@ -23,61 +20,77 @@ class HomeController extends Controller {
         }
     }
 
-    //Retorna o número total de clientes em formato JSON para o dashboard.
-    public function getTotalClientesData() {
-        // Garante que apenas administradores acessem este dado (se for uma informação sensível)
+    private function checkAdminAuth() {
         if (!isset($_SESSION['usuario']) || $_SESSION['perfil'] !== 'adm') {
             header('HTTP/1.1 403 Forbidden');
             echo json_encode(['error' => 'Acesso negado.']);
             exit();
         }
-
-        $clienteModel = new Cliente();
-        $totalClientes = $clienteModel->countAllClients(); // Chama o método do Model
-
-        header('Content-Type: application/json'); // Define o cabeçalho para JSON
-        echo json_encode(['total_clientes' => $totalClientes]); // Retorna o total como JSON
-        exit(); // Encerra a execução
     }
 
-    //Carrega a view do dashboard de clientes.
     public function clientesDashboard() {
-        // Garante que apenas administradores acessem o dashboard
         if (!isset($_SESSION['usuario']) || $_SESSION['perfil'] !== 'adm') {
             header('Location: ' . BASE_URL . '/auth/login');
             exit();
         }
-        $this->view('home/dashboard_clientes'); // Carrega a view do dashboard de clientes
+        $this->view('home/dashboard_clientes');
     }
 
-    //Retorna o número total de produtos e o valor total em formato JSON para o dashboard.
-    public function getTotalProdutosData() {
-        // Garante que apenas administradores acessem este dado
+    public function produtosDashboard() {
         if (!isset($_SESSION['usuario']) || $_SESSION['perfil'] !== 'adm') {
-            header('HTTP/1.1 403 Forbidden');
-            echo json_encode(['error' => 'Acesso negado.']);
+            header('Location: ' . BASE_URL . '/auth/login');
             exit();
         }
+        $this->view('home/dashboard_produtos');
+    }
 
-        $produtoModel = new Produto();
-        $totalProdutos = $produtoModel->countAllProducts(); // Total de produtos
-        $totalValorProdutos = $produtoModel->getTotalValueOfAllProducts(); // NOVO: Valor total dos produtos
+    // --- ENDPOINTS PARA OS GRÁFICOS ---
 
+    public function getTotalClientesData() {
+        $this->checkAdminAuth();
+        $clienteModel = new Cliente();
         header('Content-Type: application/json');
-        echo json_encode([
-            'total_produtos' => $totalProdutos,
-            'total_valor_produtos' => $totalValorProdutos // Adicionado ao JSON
-        ]);
+        echo json_encode(['total_clientes' => $clienteModel->countAllClients()]);
         exit();
     }
 
-    //Carrega a view do dashboard de produtos.
-    public function produtosDashboard() {
-        // Garante que apenas administradores acessem o dashboard
-        if (!isset($_SESSION['usuario']) || $_SESSION['perfil'] !== 'adm') {
-            header('Location: ' . BASE_URL . '/auth/login');
-            exit();
-        }
-        $this->view('home/dashboard_produtos'); // Carrega a view do dashboard de produtos
+    public function getTopConsumedProductsData() {
+        $this->checkAdminAuth();
+        $produtoModel = new Produto();
+        header('Content-Type: application/json');
+        echo json_encode($produtoModel->getTopConsumedProducts());
+        exit();
+    }
+
+    public function getLeastConsumedProductsData() {
+        $this->checkAdminAuth();
+        $produtoModel = new Produto();
+        header('Content-Type: application/json');
+        echo json_encode($produtoModel->getLeastConsumedProducts());
+        exit();
+    }
+
+    public function getRevenueTrendData() {
+        $this->checkAdminAuth();
+        $consumoModel = new Consumo();
+        header('Content-Type: application/json');
+        echo json_encode($consumoModel->getRevenueTrend());
+        exit();
+    }
+
+    public function getProductsSortedByPriceData() {
+        $this->checkAdminAuth();
+        $produtoModel = new Produto();
+        header('Content-Type: application/json');
+        echo json_encode($produtoModel->getProductsSortedByPrice());
+        exit();
+    }
+
+    public function getClientsByConsumptionQuantityData() {
+        $this->checkAdminAuth();
+        $clienteModel = new Cliente();
+        header('Content-Type: application/json');
+        echo json_encode($clienteModel->getClientsByConsumptionQuantity());
+        exit();
     }
 }
